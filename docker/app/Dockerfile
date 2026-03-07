@@ -53,7 +53,7 @@ RUN COMPOSER_MEMORY_LIMIT=-1 composer install \
         --prefer-dist \
         --no-dev \
         --no-scripts \
-    && composer dump-autoload --optimize --no-dev
+    && composer dump-autoload --optimize --no-dev --no-scripts
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
