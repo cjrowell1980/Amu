@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\RoomMemberRole;
+use App\Enums\RoomStatus;
+use App\Enums\RoomVisibility;
+use App\Enums\SessionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,11 +37,17 @@ class GameRoom extends Model
     protected function casts(): array
     {
         return [
+            'status'           => RoomStatus::class,
+            'visibility'       => RoomVisibility::class,
             'allow_spectators' => 'boolean',
-            'max_players' => 'integer',
-            'room_config' => 'array',
+            'max_players'      => 'integer',
+            'room_config'      => 'array',
         ];
     }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
 
     public function game(): BelongsTo
     {
@@ -59,6 +69,14 @@ class GameRoom extends Model
         return $this->hasMany(GameRoomMember::class)->whereNull('left_at');
     }
 
+    public function activePlayers(): HasMany
+    {
+        return $this->activeMembers()->whereIn('role', [
+            RoomMemberRole::Host->value,
+            RoomMemberRole::Player->value,
+        ]);
+    }
+
     public function sessions(): HasMany
     {
         return $this->hasMany(GameSession::class);
@@ -66,18 +84,40 @@ class GameRoom extends Model
 
     public function activeSession(): HasOne
     {
-        return $this->hasOne(GameSession::class)->whereIn('status', ['created', 'starting', 'active', 'paused']);
+        $activeStatuses = collect(SessionStatus::cases())
+            ->filter(fn (SessionStatus $s) => ! $s->isTerminal())
+            ->map(fn (SessionStatus $s) => $s->value)
+            ->values()
+            ->all();
+
+        return $this->hasOne(GameSession::class)->whereIn('status', $activeStatuses);
     }
+
+    // -------------------------------------------------------------------------
+    // Scopes
+    // -------------------------------------------------------------------------
 
     public function scopePubliclyVisible($query)
     {
-        return $query->where('visibility', 'public');
+        return $query->where('visibility', RoomVisibility::Public->value);
     }
 
     public function scopeWaiting($query)
     {
-        return $query->where('status', 'waiting');
+        return $query->where('status', RoomStatus::Waiting->value);
     }
+
+    public function scopeOpenForJoining($query)
+    {
+        return $query->whereIn('status', [
+            RoomStatus::Waiting->value,
+            RoomStatus::Ready->value,
+        ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Domain helpers
+    // -------------------------------------------------------------------------
 
     public function hasPassword(): bool
     {
@@ -91,6 +131,45 @@ class GameRoom extends Model
 
     public function isFull(): bool
     {
-        return $this->activeMembers()->count() >= $this->effectiveMaxPlayers();
+        return $this->activePlayers()->count() >= $this->effectiveMaxPlayers();
+    }
+
+    public function isOpenForJoining(): bool
+    {
+        return $this->status->acceptsNewMembers() && ! $this->isFull();
+    }
+
+    public function canTransitionTo(RoomStatus $next): bool
+    {
+        return $this->status->canTransitionTo($next);
+    }
+
+    /**
+     * Check whether all active (non-spectator) members are ready.
+     * The host is excluded from the ready check only if there are other players;
+     * otherwise at least 1 non-host player must be present.
+     */
+    public function allPlayersReady(): bool
+    {
+        $players = $this->activePlayers()->get();
+
+        if ($players->count() < ($this->game->min_players ?? 1)) {
+            return false;
+        }
+
+        return $players->every(fn (GameRoomMember $m) => $m->is_ready);
+    }
+
+    /**
+     * Return the member record for a given user, or null.
+     */
+    public function memberFor(User $user): ?GameRoomMember
+    {
+        return $this->activeMembers()->where('user_id', $user->id)->first();
+    }
+
+    public function hasMember(User $user): bool
+    {
+        return $this->memberFor($user) !== null;
     }
 }

@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Enums\SessionStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class GameSession extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -26,10 +28,11 @@ class GameSession extends Model
     protected function casts(): array
     {
         return [
+            'status'         => SessionStatus::class,
             'session_config' => 'array',
             'result_summary' => 'array',
-            'started_at' => 'datetime',
-            'ended_at' => 'datetime',
+            'started_at'     => 'datetime',
+            'ended_at'       => 'datetime',
         ];
     }
 
@@ -39,10 +42,14 @@ class GameSession extends Model
 
         static::creating(function (GameSession $session) {
             if (empty($session->uuid)) {
-                $session->uuid = (string) \Illuminate\Support\Str::uuid();
+                $session->uuid = (string) Str::uuid();
             }
         });
     }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
 
     public function game(): BelongsTo
     {
@@ -59,8 +66,35 @@ class GameSession extends Model
         return $this->hasMany(GameSessionParticipant::class);
     }
 
+    public function activePlayers(): HasMany
+    {
+        return $this->participants()->where('role', 'player')->whereNull('left_at');
+    }
+
+    // -------------------------------------------------------------------------
+    // Domain helpers
+    // -------------------------------------------------------------------------
+
     public function isActive(): bool
     {
-        return in_array($this->status, ['created', 'starting', 'active', 'paused']);
+        return $this->status->isActive();
+    }
+
+    public function isTerminal(): bool
+    {
+        return $this->status->isTerminal();
+    }
+
+    public function canTransitionTo(SessionStatus $next): bool
+    {
+        return $this->status->canTransitionTo($next);
+    }
+
+    /**
+     * Route model binding via UUID instead of numeric id.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 }

@@ -23,7 +23,7 @@ class RoomManagementTest extends TestCase
         parent::setUp();
         $this->seed(RolePermissionSeeder::class);
 
-        $this->game = Game::factory()->create(['enabled' => true]);
+        $this->game = Game::factory()->create(['availability' => 'enabled']);
         $this->user = User::factory()->create();
         $this->user->assignRole('player');
     }
@@ -42,8 +42,8 @@ class RoomManagementTest extends TestCase
             ]);
 
         $response->assertCreated()
-            ->assertJsonPath('code', fn ($v) => strlen($v) === 6)
-            ->assertJsonPath('status', 'waiting');
+            ->assertJsonPath('data.code', fn ($v) => strlen($v) === 6)
+            ->assertJsonPath('data.status', 'waiting');
 
         $this->assertDatabaseHas('game_rooms', [
             'game_id' => $this->game->id,
@@ -127,7 +127,7 @@ class RoomManagementTest extends TestCase
 
     public function test_user_cannot_join_a_room_in_progress(): void
     {
-        $room = GameRoom::factory()->inGame()->create([
+        $room = GameRoom::factory()->inProgress()->create([
             'game_id' => $this->game->id,
         ]);
 
@@ -233,8 +233,8 @@ class RoomManagementTest extends TestCase
         $this->actingAs($this->user, 'sanctum')
             ->getJson("/api/v1/rooms/{$room->id}")
             ->assertOk()
-            ->assertJsonPath('id', $room->id)
-            ->assertJsonPath('code', $room->code);
+            ->assertJsonPath('data.id', $room->id)
+            ->assertJsonPath('data.code', $room->code);
     }
 
     public function test_private_room_is_not_visible_to_non_members(): void

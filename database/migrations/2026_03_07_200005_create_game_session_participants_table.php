@@ -12,13 +12,15 @@ return new class extends Migration
             $table->id();
             $table->foreignId('game_session_id')->constrained('game_sessions')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
-            $table->enum('role', ['player', 'spectator'])->default('player');
+            // Valid values enforced by App\Enums\ParticipantRole
+            $table->string('role', 20)->default('player');
             $table->unsignedSmallInteger('team_number')->nullable();
             $table->unsignedSmallInteger('seat_number')->nullable();
-            $table->enum('connection_status', ['connected', 'disconnected', 'reconnecting'])->default('connected');
-            $table->integer('final_rank')->nullable()->comment('Populated when session ends');
+            // Valid values enforced by App\Enums\ConnectionStatus
+            $table->string('connection_status', 20)->default('connected');
+            $table->integer('final_rank')->nullable();
             $table->integer('score')->nullable();
-            $table->json('result_detail')->nullable()->comment('Per-player result blob from game module');
+            $table->json('result_detail')->nullable();
             $table->timestamp('joined_at')->useCurrent();
             $table->timestamp('left_at')->nullable();
             $table->timestamps();

@@ -6,10 +6,17 @@ use App\Events\Room\PlayerLeftRoom;
 use App\Models\GameRoom;
 use App\Models\GameRoomMember;
 use App\Models\User;
+use App\Services\AuditService;
+use App\Services\RoomLifecycleService;
 use Illuminate\Validation\ValidationException;
 
 class LeaveRoomAction
 {
+    public function __construct(
+        private readonly AuditService $audit,
+        private readonly RoomLifecycleService $lifecycle,
+    ) {}
+
     public function execute(User $user, GameRoom $room): void
     {
         $member = GameRoomMember::where('game_room_id', $room->id)
@@ -25,27 +32,17 @@ class LeaveRoomAction
 
         $member->update(['left_at' => now(), 'is_ready' => false]);
 
+        $this->audit->playerLeftRoom($room, $user);
         event(new PlayerLeftRoom($room, $user));
 
-        // If the host leaves and others remain, promote oldest remaining member.
-        if ($room->host_user_id === $user->id) {
-            $this->promoteNewHostOrClose($room, $user);
-        }
-    }
+        $room->refresh();
 
-    private function promoteNewHostOrClose(GameRoom $room, User $departingHost): void
-    {
-        $nextMember = GameRoomMember::where('game_room_id', $room->id)
-            ->whereNull('left_at')
-            ->where('user_id', '!=', $departingHost->id)
-            ->orderBy('joined_at')
-            ->first();
-
-        if ($nextMember) {
-            $nextMember->update(['role' => 'host']);
-            $room->update(['host_user_id' => $nextMember->user_id]);
+        if ($member->isHost()) {
+            // Delegate host-left logic to the lifecycle service
+            $this->lifecycle->handleHostLeft($room, $user);
         } else {
-            $room->update(['status' => 'cancelled']);
+            // Recalculate ready status in case this was the last unready player
+            $this->lifecycle->recalculateReadyStatus($room);
         }
     }
 }

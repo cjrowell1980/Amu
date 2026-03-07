@@ -10,19 +10,13 @@ return new class extends Migration
     {
         Schema::create('game_sessions', function (Blueprint $table) {
             $table->id();
-            $table->string('uuid')->unique()->comment('Public-facing session reference');
+            $table->string('uuid')->unique();
             $table->foreignId('game_id')->constrained('games')->restrictOnDelete();
             $table->foreignId('game_room_id')->constrained('game_rooms')->restrictOnDelete();
-            $table->enum('status', [
-                'created',    // session record created, not started
-                'starting',   // brief starting phase (countdown)
-                'active',     // gameplay in progress
-                'paused',     // temporarily halted
-                'completed',  // finished naturally
-                'abandoned',  // did not finish (disconnects, cancel)
-            ])->default('created');
-            $table->json('session_config')->nullable()->comment('Resolved config snapshot for this session');
-            $table->json('result_summary')->nullable()->comment('Outcome blob written by game module on end');
+            // Valid values enforced by App\Enums\SessionStatus
+            $table->string('status', 20)->default('created');
+            $table->json('session_config')->nullable();
+            $table->json('result_summary')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('ended_at')->nullable();
             $table->timestamps();

@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Contracts\GameModuleInterface;
-use App\Models\Game;
-use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 /**
@@ -12,17 +10,32 @@ use InvalidArgumentException;
  *
  * Modules register themselves via AppServiceProvider (or a dedicated
  * GameServiceProvider). The registry maps game slug → module instance.
- * The database Game record is the source of truth for metadata; this
- * service provides runtime access to the module logic.
+ *
+ * The database Game record is the source of truth for metadata and availability;
+ * this service provides runtime access to the module logic.
  */
 class GameRegistryService
 {
     /** @var array<string, GameModuleInterface> */
     private array $modules = [];
 
+    /**
+     * Register a game module with the platform.
+     *
+     * @throws InvalidArgumentException if a module with the same slug is already registered.
+     */
     public function register(GameModuleInterface $module): void
     {
-        $this->modules[$module->getSlug()] = $module;
+        $slug = $module->getSlug();
+
+        if ($this->has($slug)) {
+            throw new InvalidArgumentException(
+                "A game module with slug [{$slug}] is already registered. " .
+                "Each game module must have a unique slug."
+            );
+        }
+
+        $this->modules[$slug] = $module;
     }
 
     public function has(string $slug): bool
@@ -30,13 +43,29 @@ class GameRegistryService
         return isset($this->modules[$slug]);
     }
 
-    public function get(string $slug): GameModuleInterface
+    /**
+     * Resolve a module by slug.
+     *
+     * @throws InvalidArgumentException if no module is registered for the slug.
+     */
+    public function resolve(string $slug): GameModuleInterface
     {
         if (! $this->has($slug)) {
-            throw new InvalidArgumentException("No game module registered for slug: {$slug}");
+            throw new InvalidArgumentException(
+                "No game module registered for slug [{$slug}]. " .
+                "Ensure the module is registered in AppServiceProvider::registerGameModules()."
+            );
         }
 
         return $this->modules[$slug];
+    }
+
+    /**
+     * @deprecated Use resolve() instead.
+     */
+    public function get(string $slug): GameModuleInterface
+    {
+        return $this->resolve($slug);
     }
 
     /** @return array<string, GameModuleInterface> */

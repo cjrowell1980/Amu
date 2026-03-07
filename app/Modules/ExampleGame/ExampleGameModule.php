@@ -2,22 +2,29 @@
 
 namespace App\Modules\ExampleGame;
 
-use App\Contracts\GameModuleInterface;
 use App\Models\GameRoom;
 use App\Models\GameSession;
-use App\Models\User;
+use App\Models\GameSessionParticipant;
+use App\Modules\AbstractGameModule;
 
 /**
- * ExampleGameModule — a minimal stub that demonstrates the module contract.
+ * ExampleGameModule — a minimal stub demonstrating the module contract.
  *
- * This is NOT a real game. It exists only to:
- *   1. Prove the GameModuleInterface can be satisfied.
- *   2. Show developers what a module implementation looks like.
- *   3. Be registered in the game registry as a reference entry.
- *
- * Delete or replace this when a real game module is added.
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  THIS IS NOT A REAL GAME.                                               │
+ * │                                                                         │
+ * │  It exists to:                                                          │
+ * │    1. Prove the AbstractGameModule / GameModuleInterface can be          │
+ * │       satisfied without error.                                          │
+ * │    2. Show developers a reference implementation to copy from.           │
+ * │    3. Exercise the platform core (registry, session lifecycle, etc.)    │
+ * │       in tests.                                                         │
+ * │                                                                         │
+ * │  When you build a real game, copy this folder, rename it, update       │
+ * │  getSlug() / getName(), and override the methods you need.             │
+ * └─────────────────────────────────────────────────────────────────────────┘
  */
-class ExampleGameModule implements GameModuleInterface
+class ExampleGameModule extends AbstractGameModule
 {
     public function getName(): string
     {
@@ -34,73 +41,137 @@ class ExampleGameModule implements GameModuleInterface
         return '1.0.0';
     }
 
+    /**
+     * Optional config validation — validates 'rounds' if provided.
+     */
     public function validateRoomConfig(array $config): array
     {
         $errors = [];
 
-        if (isset($config['rounds']) && ((int) $config['rounds'] < 1 || (int) $config['rounds'] > 20)) {
-            $errors['rounds'] = 'Rounds must be between 1 and 20.';
+        if (isset($config['rounds'])) {
+            $rounds = (int) $config['rounds'];
+            if ($rounds < 1 || $rounds > 20) {
+                $errors['rounds'] = 'Rounds must be between 1 and 20.';
+            }
         }
 
         return $errors;
     }
 
+    /**
+     * Set default session config values.
+     */
     public function buildSessionConfig(GameRoom $room, array $resolvedConfig): array
     {
         return array_merge([
-            'rounds' => 3,
+            'rounds'               => 3,
             'turn_timeout_seconds' => 30,
+            'current_round'        => 0,
+            'scores'               => [],
         ], $resolvedConfig);
     }
 
+    /**
+     * Initialise scores for all participants on session start.
+     */
     public function onSessionStart(GameSession $session): bool
     {
-        // Nothing to do for the stub. Return true to allow start.
+        $participants = $session->participants()->with('user')->get();
+
+        $scores = [];
+        foreach ($participants as $participant) {
+            $scores[$participant->user_id] = 0;
+        }
+
+        $this->updateConfig($session, ['scores' => $scores, 'current_round' => 1]);
+
         return true;
     }
 
+    /**
+     * Handle a generic 'increment_score' action for demo purposes.
+     */
     public function handlePlayerAction(
         GameSession $session,
-        User $actor,
-        string $actionType,
-        array $payload
+        GameSessionParticipant $participant,
+        array $payload,
     ): array {
+        $action = $payload['type'] ?? 'unknown';
+
+        if ($action === 'increment_score') {
+            $config = $this->getConfig($session);
+            $scores = $config['scores'] ?? [];
+            $scores[$participant->user_id] = ($scores[$participant->user_id] ?? 0) + 1;
+            $this->updateConfig($session, ['scores' => $scores]);
+
+            return ['acknowledged' => true, 'new_score' => $scores[$participant->user_id]];
+        }
+
         return [
             'acknowledged' => true,
-            'action' => $actionType,
-            'message' => 'ExampleGame: action received but not processed.',
+            'action'       => $action,
+            'message'      => 'ExampleGame: action received but not processed.',
         ];
     }
 
     public function getPublicState(GameSession $session): array
     {
+        $config = $this->getConfig($session);
+
         return [
-            'session_id' => $session->id,
-            'status' => $session->status,
-            'message' => 'No public state — this is a stub module.',
+            'current_round' => $config['current_round'] ?? 1,
+            'total_rounds'  => $config['rounds'] ?? 3,
+            'scores'        => $config['scores'] ?? [],
         ];
     }
 
-    public function getPrivateState(GameSession $session, User $user): array
+    public function getPrivateState(GameSession $session, GameSessionParticipant $participant): array
     {
+        $config = $this->getConfig($session);
+
         return [
-            'session_id' => $session->id,
-            'user_id' => $user->id,
-            'message' => 'No private state — this is a stub module.',
+            'my_score' => $config['scores'][$participant->user_id] ?? 0,
         ];
     }
 
+    /**
+     * Determine final scores and return result summary.
+     */
     public function onSessionEnd(GameSession $session): array
     {
+        $config = $this->getConfig($session);
+        $scores = $config['scores'] ?? [];
+
+        arsort($scores);
+
+        $ranked = [];
+        $rank   = 1;
+        foreach ($scores as $userId => $score) {
+            $ranked[] = [
+                'user_id' => (int) $userId,
+                'score'   => $score,
+                'rank'    => $rank++,
+            ];
+        }
+
         return [
-            'winner' => null,
-            'scores' => [],
-            'message' => 'ExampleGame ended — stub result.',
+            'winner'   => $ranked[0] ?? null,
+            'rankings' => $ranked,
         ];
     }
 
+    /**
+     * Persist final ranks back to participant records.
+     */
     public function persistResults(GameSession $session, array $resultSummary): void
     {
-        // No game-specific persistence needed for the stub.
+        foreach ($resultSummary['rankings'] ?? [] as $entry) {
+            $session->participants()
+                ->where('user_id', $entry['user_id'])
+                ->update([
+                    'final_rank' => $entry['rank'],
+                    'score'      => $entry['score'],
+                ]);
+        }
     }
 }

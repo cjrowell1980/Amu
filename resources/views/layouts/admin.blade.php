@@ -48,6 +48,9 @@
     <a href="{{ route('admin.games.index') }}">Games</a>
     <a href="{{ route('admin.rooms.index') }}">Rooms</a>
     <a href="{{ route('admin.sessions.index') }}">Sessions</a>
+    @hasrole('admin|operator')
+    <a href="{{ route('admin.audit.index') }}">Audit</a>
+    @endhasrole
     <a href="/telescope" target="_blank">Telescope</a>
     <a href="/horizon" target="_blank">Horizon</a>
 </nav>

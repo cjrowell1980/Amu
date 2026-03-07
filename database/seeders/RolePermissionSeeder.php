@@ -20,6 +20,7 @@ class RolePermissionSeeder extends Seeder
             'manage rooms',
             'view telescope',
             'view horizon',
+            'view audit logs',
 
             // Room permissions
             'create rooms',
@@ -29,6 +30,9 @@ class RolePermissionSeeder extends Seeder
             // Session permissions
             'view sessions',
             'force end sessions',
+
+            // Feature flag / beta access
+            'access beta games',
         ];
 
         foreach ($permissions as $permission) {
@@ -38,6 +42,13 @@ class RolePermissionSeeder extends Seeder
         // player — basic platform participant
         $player = Role::firstOrCreate(['name' => 'player']);
         $player->syncPermissions(['create rooms']);
+
+        // beta_tester — player + beta game access
+        $betaTester = Role::firstOrCreate(['name' => 'beta_tester']);
+        $betaTester->syncPermissions([
+            'create rooms',
+            'access beta games',
+        ]);
 
         // moderator — can moderate rooms and review sessions
         $moderator = Role::firstOrCreate(['name' => 'moderator']);
@@ -60,6 +71,8 @@ class RolePermissionSeeder extends Seeder
             'force end sessions',
             'view telescope',
             'view horizon',
+            'view audit logs',
+            'access beta games',
         ]);
 
         // admin — all permissions
