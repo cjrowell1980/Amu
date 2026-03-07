@@ -18,18 +18,22 @@ if [ ! -f /var/www/.env ]; then
     exit 1
 fi
 
-# 2. Ensure APP_KEY is set (Laravel will throw a blank-screen error without it)
+# 2. Ensure dependencies are present when using bind mounts.
+# Docker bind mounts can hide image-built /var/www/vendor.
+if [ ! -f /var/www/vendor/autoload.php ]; then
+    echo ""
+    echo "WARN: /var/www/vendor/autoload.php not found. Running composer install ..."
+    echo ""
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-interaction --prefer-dist
+fi
+
+# 3. Ensure APP_KEY is set (Laravel will throw a blank-screen error without it)
 APP_KEY_VALUE=$(grep -E '^APP_KEY=' /var/www/.env | cut -d '=' -f2- | tr -d '[:space:]')
 if [ -z "$APP_KEY_VALUE" ]; then
     echo ""
-    echo "ERROR: APP_KEY is not set in .env."
+    echo "WARN: APP_KEY is not set in .env. Generating one ..."
     echo ""
-    echo "  Generate one with:"
-    echo "    php artisan key:generate"
-    echo "  or inside the container:"
-    echo "    docker compose exec app php artisan key:generate"
-    echo ""
-    exit 1
+    php artisan key:generate --force --ansi
 fi
 
 # ---------------------------------------------------------------------------
