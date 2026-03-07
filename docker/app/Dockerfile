@@ -42,13 +42,27 @@ WORKDIR /var/www
 # Copy application files
 COPY . .
 
-# Install PHP dependencies (production-optimised; override in dev with volume mount)
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+# Install PHP dependencies.
+# --no-scripts  — skips post-autoload-dump (php artisan package:discover) which
+#                 requires a bootstrapped Laravel app (.env + APP_KEY) that does
+#                 not exist at image build time.
+# COMPOSER_MEMORY_LIMIT=-1 — prevents OOM kills on memory-constrained builders.
+# dump-autoload is run separately to produce the optimised classmap.
+RUN COMPOSER_MEMORY_LIMIT=-1 composer install \
+        --no-interaction \
+        --prefer-dist \
+        --no-dev \
+        --no-scripts \
+    && composer dump-autoload --optimize --no-dev
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
+COPY docker/app/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 9000
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

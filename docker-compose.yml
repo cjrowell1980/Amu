@@ -17,8 +17,10 @@ services:
     networks:
       - amu_net
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   nginx:
     image: nginx:1.25-alpine
@@ -49,6 +51,12 @@ services:
       - "${DB_PORT:-3306}:3306"
     networks:
       - amu_net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7.2-alpine
@@ -77,8 +85,10 @@ services:
     networks:
       - amu_net
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   reverb:
     build:
@@ -97,7 +107,8 @@ services:
     networks:
       - amu_net
     depends_on:
-      - redis
+      redis:
+        condition: service_started
 
 volumes:
   amu_mysql_data:
