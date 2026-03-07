@@ -9,13 +9,16 @@ set -e
 # 1. Ensure .env exists
 if [ ! -f /var/www/.env ]; then
     echo ""
-    echo "ERROR: /var/www/.env not found."
+    echo "WARN: /var/www/.env not found."
     echo ""
-    echo "  Copy .env.example to .env and set the required values:"
-    echo "    cp .env.example .env"
-    echo "    # then set APP_KEY, DB_*, REDIS_*, REVERB_* etc."
-    echo ""
-    exit 1
+    if [ -f /var/www/.env.example ]; then
+        echo "  Creating /var/www/.env from .env.example ..."
+        cp /var/www/.env.example /var/www/.env
+    else
+        echo "ERROR: /var/www/.env.example not found, cannot bootstrap environment."
+        echo ""
+        exit 1
+    fi
 fi
 
 # 2. Ensure dependencies are present when using bind mounts.
