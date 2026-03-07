@@ -1,0 +1,108 @@
+version: '3.9'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    container_name: amu_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./docker/app/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+    networks:
+      - amu_net
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: amu_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - amu_net
+    depends_on:
+      - app
+
+  mysql:
+    image: mariadb:11.4
+    container_name: amu_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-amu}
+      MYSQL_USER: ${DB_USERNAME:-amu}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - amu_mysql_data:/var/lib/mysql
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    networks:
+      - amu_net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: amu_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - amu_redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - amu_net
+
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    container_name: amu_horizon
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan horizon
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+    networks:
+      - amu_net
+    depends_on:
+      - mysql
+      - redis
+
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    container_name: amu_reverb
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    ports:
+      - "${REVERB_PORT:-8080}:8080"
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+    networks:
+      - amu_net
+    depends_on:
+      - redis
+
+volumes:
+  amu_mysql_data:
+  amu_redis_data:
+
+networks:
+  amu_net:
+    driver: bridge
