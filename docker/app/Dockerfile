@@ -1,6 +1,6 @@
 FROM php:8.3-fpm-alpine
 
-# Install system dependencies
+# Install system dependencies + build tools required by PECL
 RUN apk add --no-cache \
     bash \
     curl \
@@ -12,7 +12,10 @@ RUN apk add --no-cache \
     freetype-dev \
     oniguruma-dev \
     icu-dev \
-    linux-headers
+    linux-headers \
+    autoconf \
+    g++ \
+    make
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -26,8 +29,10 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         pcntl \
         opcache
 
-# Install Redis extension
-RUN pecl install redis && docker-php-ext-enable redis
+# Install Redis extension via PECL, then remove build tools to keep image small
+RUN pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del autoconf g++ make
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
