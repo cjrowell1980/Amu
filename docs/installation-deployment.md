@@ -75,8 +75,8 @@ Use `.env` (CLI/Desktop) or stack environment variables (Portainer).
 | `DB_PORT` | `3306` | Host DB port mapping |
 | `DB_DATABASE` | `amu` | Database name |
 | `DB_USERNAME` | `amu` | Database user |
-| `DB_PASSWORD` | `secret` | Database user password |
-| `DB_ROOT_PASSWORD` | `secret` | MariaDB root password (init only) |
+| `DB_PASSWORD` | (blank) | Database user password; if blank, generated randomly and stored in runtime secret volume |
+| `DB_ROOT_PASSWORD` | (blank) | MariaDB root password; if blank, generated randomly and stored in runtime secret volume |
 | `REDIS_HOST` | `redis` | Redis host inside Docker network |
 | `REDIS_PORT` | `6379` | Host Redis port mapping |
 | `REVERB_HOST` | `reverb` | Reverb host inside Docker network |
@@ -111,6 +111,18 @@ REVERB_PORT=8081
 ```
 
 Then redeploy.
+
+## Password Behavior (Requested)
+
+- If `DB_PASSWORD` is blank: a random password is generated.
+- If `DB_PASSWORD` is set: that value is used.
+- If `DB_ROOT_PASSWORD` is blank: a random password is generated.
+- If `DB_ROOT_PASSWORD` is set: that value is used.
+
+Generated passwords are persisted in Docker volume `amu_runtime_secrets`:
+
+- `/run/amu-secrets/db_password`
+- `/run/amu-secrets/db_root_password`
 
 ## VLAN / External Docker Network (your `ipvlan-10`)
 
