@@ -86,7 +86,11 @@ Use `.env` (CLI/Desktop) or stack environment variables (Portainer).
 | `REVERB_APP_SECRET` | `amu-secret` | Reverb app secret |
 | `ADMIN_EMAIL` | `admin@example.com` | Seeded admin user |
 | `ADMIN_PASSWORD` | `password` | Seeded admin password |
-| `CLOUDFLARED_TUNNEL_TOKEN` | (empty) | Cloudflared tunnel token |
+| `CLOUDFLARED_TUNNEL_TOKEN` | (empty) | Cloudflared tunnel token (token-based tunnel mode) |
+| `CLOUDFLARED_LOGLEVEL` | `info` | Cloudflared log level (`debug`, `info`, `warn`, `error`) |
+| `EXTERNAL_NETWORK_NAME` | `ipvlan-10` | External Docker network name used by ipvlan override compose |
+| `NGINX_STATIC_IP` | (blank) | Optional static IP for nginx on external network |
+| `CLOUDFLARED_STATIC_IP` | (blank) | Optional static IP for cloudflared on external network |
 
 ### Cloudflared profile
 
@@ -98,6 +102,9 @@ Use `.env` (CLI/Desktop) or stack environment variables (Portainer).
   - Enable profile `tunnel` and set `CLOUDFLARED_TUNNEL_TOKEN`.
 
 If profile `tunnel` is not enabled, tunnel service is ignored.
+
+Token-based mode does not require tunnel name in compose.  
+If you want named-tunnel/cert-file mode later, that can be added as a separate profile.
 
 ## Port Already in Use
 
@@ -135,29 +142,18 @@ networks:
     external: true
 ```
 
-use a compose override file (example: `docker-compose.vlan10.yml`) and attach selected services:
+use included override file `docker-compose.ipvlan.yml`.
 
-```yaml
-services:
-  nginx:
-    networks:
-      - amu_net
-      - ipvlan10
-  cloudflared:
-    networks:
-      - amu_net
-      - ipvlan10
-
-networks:
-  ipvlan10:
-    name: ipvlan-10
-    external: true
-```
-
-Deploy with:
+Deploy with external network attachment:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.vlan10.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.ipvlan.yml up -d --build
+```
+
+Optional static IP deployment (only when you set `NGINX_STATIC_IP` and `CLOUDFLARED_STATIC_IP`):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ipvlan.yml -f docker-compose.ipvlan-static.yml up -d --build
 ```
 
 ## Operational Commands
