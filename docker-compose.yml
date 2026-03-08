@@ -86,9 +86,9 @@ services:
     working_dir: /var/www
     volumes:
       - amu_runtime_secrets:/run/amu-secrets
-    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    command: php artisan reverb:start --host=0.0.0.0 --port=${REVERB_SERVER_PORT:-8080}
     ports:
-      - "${REVERB_PORT:-8080}:8080"
+      - "${REVERB_PORT:-8080}:${REVERB_SERVER_PORT:-8080}"
     environment:
       - APP_ENV=${APP_ENV:-local}
     networks:
