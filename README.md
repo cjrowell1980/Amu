@@ -58,6 +58,7 @@ docker compose exec app php artisan migrate --seed
 | [docs/game-module-guide.md](docs/game-module-guide.md) | How to build a game module |
 | [docs/api-overview.md](docs/api-overview.md) | REST API and WebSocket channel reference |
 | [docs/local-development.md](docs/local-development.md) | Docker setup and dev workflow |
+| [docs/installation-deployment.md](docs/installation-deployment.md) | Installation/deployment via CLI, Docker Desktop, and Portainer |
 
 ## After this phase
 
