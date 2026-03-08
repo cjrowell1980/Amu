@@ -10,6 +10,7 @@ services:
     volumes:
       - .:/var/www
       - amu_vendor:/var/www/vendor
+      - amu_runtime_secrets:/run/amu-secrets
       - ./docker/app/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       - APP_ENV=${APP_ENV:-local}
@@ -37,16 +38,19 @@ services:
       - app
 
   mysql:
-    image: mariadb:11.4
+    build:
+      context: .
+      dockerfile: docker/mysql/Dockerfile
     container_name: amu_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
-      MYSQL_DATABASE: ${DB_DATABASE:-amu}
-      MYSQL_USER: ${DB_USERNAME:-amu}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-}
+      DB_DATABASE: ${DB_DATABASE:-amu}
+      DB_USERNAME: ${DB_USERNAME:-amu}
+      DB_PASSWORD: ${DB_PASSWORD:-}
     volumes:
       - amu_mysql_data:/var/lib/mysql
+      - amu_runtime_secrets:/run/amu-secrets
     ports:
       - "${DB_PORT:-3306}:3306"
     networks:
@@ -74,6 +78,7 @@ services:
     volumes:
       - .:/var/www
       - amu_vendor:/var/www/vendor
+      - amu_runtime_secrets:/run/amu-secrets
     command: php artisan horizon
     environment:
       - APP_ENV=${APP_ENV:-local}
@@ -95,6 +100,7 @@ services:
     volumes:
       - .:/var/www
       - amu_vendor:/var/www/vendor
+      - amu_runtime_secrets:/run/amu-secrets
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
       - "${REVERB_PORT:-8080}:8080"
@@ -125,6 +131,7 @@ volumes:
   amu_mysql_data:
   amu_redis_data:
   amu_vendor:
+  amu_runtime_secrets:
 
 networks:
   amu_net:

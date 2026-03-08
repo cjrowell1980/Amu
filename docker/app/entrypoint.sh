@@ -21,6 +21,15 @@ if [ ! -f /var/www/.env ]; then
     fi
 fi
 
+# 1b. Sync DB password from shared runtime secret when DB_PASSWORD is blank.
+DB_PASSWORD_VALUE=$(grep -E '^DB_PASSWORD=' /var/www/.env | cut -d '=' -f2- | tr -d '[:space:]')
+DB_PASSWORD_SECRET_FILE=/run/amu-secrets/db_password
+if [ -z "$DB_PASSWORD_VALUE" ] && [ -f "$DB_PASSWORD_SECRET_FILE" ] && [ -s "$DB_PASSWORD_SECRET_FILE" ]; then
+    DB_PASSWORD_SECRET=$(cat "$DB_PASSWORD_SECRET_FILE")
+    sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASSWORD_SECRET/" /var/www/.env
+    echo "Injected DB_PASSWORD into /var/www/.env from shared secret store."
+fi
+
 # 2. Ensure dependencies are present when using bind mounts.
 # Docker bind mounts can hide image-built /var/www/vendor.
 if [ ! -f /var/www/vendor/autoload.php ]; then
