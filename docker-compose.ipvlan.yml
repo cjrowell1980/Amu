@@ -1,0 +1,15 @@
+services:
+  nginx:
+    networks:
+      - amu_net
+      - external_net
+
+  cloudflared:
+    networks:
+      - amu_net
+      - external_net
+
+networks:
+  external_net:
+    name: ${EXTERNAL_NETWORK_NAME:-ipvlan-10}
+    external: true

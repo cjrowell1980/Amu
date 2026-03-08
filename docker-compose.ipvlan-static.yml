@@ -1,0 +1,15 @@
+services:
+  nginx:
+    networks:
+      external_net:
+        ipv4_address: ${NGINX_STATIC_IP}
+
+  cloudflared:
+    networks:
+      external_net:
+        ipv4_address: ${CLOUDFLARED_STATIC_IP}
+
+networks:
+  external_net:
+    name: ${EXTERNAL_NETWORK_NAME:-ipvlan-10}
+    external: true

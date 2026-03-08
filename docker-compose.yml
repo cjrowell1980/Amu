@@ -116,7 +116,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: amu_cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate --loglevel ${CLOUDFLARED_LOGLEVEL:-info} run --token ${CLOUDFLARED_TUNNEL_TOKEN}
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARED_TUNNEL_TOKEN}
     networks:
