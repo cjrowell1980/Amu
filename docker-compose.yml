@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    container_name: amu_app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -23,7 +22,6 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
-    container_name: amu_nginx
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:80"
@@ -36,7 +34,6 @@ services:
     build:
       context: .
       dockerfile: docker/mysql/Dockerfile
-    container_name: amu_mysql
     restart: unless-stopped
     environment:
       DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-}
@@ -53,7 +50,6 @@ services:
 
   redis:
     image: redis:7.2-alpine
-    container_name: amu_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
@@ -67,7 +63,6 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    container_name: amu_horizon
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -87,7 +82,6 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    container_name: amu_reverb
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -105,7 +99,6 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: amu_cloudflared
     restart: unless-stopped
     command:
       - /bin/sh

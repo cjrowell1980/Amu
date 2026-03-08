@@ -55,7 +55,7 @@ Default seeded users:
 4. Set stack env vars as needed (see table below).
 5. Deploy stack.
 
-After first deploy, run migrations from Portainer console on `amu_app`:
+After first deploy, run migrations from Portainer console on the app container (usually `<stack_name>_app_1`):
 
 ```bash
 php artisan migrate --seed --force
