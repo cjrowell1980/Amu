@@ -23,8 +23,10 @@ fi
 
 # 1b. Sync DB password from shared runtime secret when DB_PASSWORD is blank.
 DB_PASSWORD_VALUE=$(grep -E '^DB_PASSWORD=' /var/www/.env | cut -d '=' -f2- | tr -d '[:space:]')
+DB_PASSWORD_NORMALIZED=$(printf '%s' "$DB_PASSWORD_VALUE" | tr '[:upper:]' '[:lower:]')
 DB_PASSWORD_SECRET_FILE=/run/amu-secrets/db_password
-if [ -z "$DB_PASSWORD_VALUE" ] && [ -f "$DB_PASSWORD_SECRET_FILE" ] && [ -s "$DB_PASSWORD_SECRET_FILE" ]; then
+if { [ -z "$DB_PASSWORD_VALUE" ] || [ "$DB_PASSWORD_NORMALIZED" = "null" ]; } \
+    && [ -f "$DB_PASSWORD_SECRET_FILE" ] && [ -s "$DB_PASSWORD_SECRET_FILE" ]; then
     DB_PASSWORD_SECRET=$(cat "$DB_PASSWORD_SECRET_FILE")
     sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASSWORD_SECRET/" /var/www/.env
     echo "Injected DB_PASSWORD into /var/www/.env from shared secret store."
