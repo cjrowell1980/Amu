@@ -18,15 +18,34 @@ services:
       redis:
         condition: service_started
 
-  nginx:
+  nginx_local:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
     restart: unless-stopped
+    profiles:
+      - local-access
     ports:
       - "${APP_PORT:-8000}:80"
     networks:
-      - amu_net
+      amu_net:
+        aliases:
+          - nginx
+    depends_on:
+      - app
+
+  nginx_tunnel:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    profiles:
+      - tunnel-only
+      - tunnel
+    networks:
+      amu_net:
+        aliases:
+          - nginx
     depends_on:
       - app
 
@@ -40,8 +59,6 @@ services:
     volumes:
       - amu_mysql_data:/var/lib/mysql
       - amu_runtime_secrets:/run/amu-secrets
-    ports:
-      - "${DB_PORT:-3306}:3306"
     networks:
       - amu_net
 
@@ -51,8 +68,6 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - amu_redis_data:/data
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     networks:
       - amu_net
 
@@ -86,8 +101,6 @@ services:
     volumes:
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
-    ports:
-      - "${REVERB_PORT:-8080}:8080"
     networks:
       - amu_net
     depends_on:
@@ -99,6 +112,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./stack.env
+    profiles:
+      - tunnel
+      - tunnel-only
     command:
       - /bin/sh
       - -lc
@@ -108,15 +124,10 @@ services:
           echo "CLOUDFLARED_TUNNEL_TOKEN is empty/null, cloudflared disabled."
           tail -f /dev/null
         else
-          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
+          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}" --url "$${CLOUDFLARED_ORIGIN_URL:-http://nginx:80}"
         fi
     networks:
       - amu_net
-    depends_on:
-      nginx:
-        condition: service_started
-    profiles:
-      - tunnel
 
 volumes:
   amu_mysql_data:
@@ -126,3 +137,6 @@ volumes:
 networks:
   amu_net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: ${AMU_SUBNET:-172.28.50.0/24}
