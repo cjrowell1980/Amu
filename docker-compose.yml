@@ -124,7 +124,7 @@ services:
           echo "CLOUDFLARED_TUNNEL_TOKEN is empty/null, cloudflared disabled."
           tail -f /dev/null
         else
-          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}" --url "$${CLOUDFLARED_ORIGIN_URL:-http://nginx:80}"
+          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
         fi
     networks:
       - amu_net
