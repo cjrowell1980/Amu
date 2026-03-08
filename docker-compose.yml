@@ -8,10 +8,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www
-      - amu_vendor:/var/www/vendor
       - amu_runtime_secrets:/run/amu-secrets
-      - ./docker/app/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       - APP_ENV=${APP_ENV:-local}
     networks:
@@ -30,8 +27,6 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:80"
-    volumes:
-      - .:/var/www
     networks:
       - amu_net
     depends_on:
@@ -76,8 +71,6 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www
-      - amu_vendor:/var/www/vendor
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan horizon
     environment:
@@ -98,8 +91,6 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www
-      - amu_vendor:/var/www/vendor
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
@@ -116,9 +107,17 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: amu_cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate --loglevel ${CLOUDFLARED_LOGLEVEL:-info} run --token ${CLOUDFLARED_TUNNEL_TOKEN}
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARED_TUNNEL_TOKEN}
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        TOKEN="$$(printf '%s' "$${CLOUDFLARED_TUNNEL_TOKEN:-}" | tr '[:upper:]' '[:lower:]')"
+        if [ -z "$$TOKEN" ] || [ "$$TOKEN" = "null" ]; then
+          echo "CLOUDFLARED_TUNNEL_TOKEN is empty/null, cloudflared disabled."
+          tail -f /dev/null
+        else
+          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
+        fi
     networks:
       - amu_net
     depends_on:
@@ -130,7 +129,6 @@ services:
 volumes:
   amu_mysql_data:
   amu_redis_data:
-  amu_vendor:
   amu_runtime_secrets:
 
 networks:
