@@ -6,10 +6,10 @@ services:
       dockerfile: docker/app/Dockerfile
     restart: unless-stopped
     working_dir: /var/www
+    env_file:
+      - ./stack.env
     volumes:
       - amu_runtime_secrets:/run/amu-secrets
-    environment:
-      - APP_ENV=${APP_ENV:-local}
     networks:
       - amu_net
     depends_on:
@@ -24,7 +24,7 @@ services:
       dockerfile: docker/nginx/Dockerfile
     restart: unless-stopped
     ports:
-      - "8000:80"
+      - "${APP_PORT:-8000}:80"
     networks:
       - amu_net
     depends_on:
@@ -35,16 +35,13 @@ services:
       context: .
       dockerfile: docker/mysql/Dockerfile
     restart: unless-stopped
-    environment:
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-}
-      DB_DATABASE: ${DB_DATABASE:-amu}
-      DB_USERNAME: ${DB_USERNAME:-amu}
-      DB_PASSWORD: ${DB_PASSWORD:-}
+    env_file:
+      - ./stack.env
     volumes:
       - amu_mysql_data:/var/lib/mysql
       - amu_runtime_secrets:/run/amu-secrets
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     networks:
       - amu_net
 
@@ -55,7 +52,7 @@ services:
     volumes:
       - amu_redis_data:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - amu_net
 
@@ -65,11 +62,11 @@ services:
       dockerfile: docker/app/Dockerfile
     restart: unless-stopped
     working_dir: /var/www
+    env_file:
+      - ./stack.env
     volumes:
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan horizon
-    environment:
-      - APP_ENV=${APP_ENV:-local}
     networks:
       - amu_net
     depends_on:
@@ -84,13 +81,13 @@ services:
       dockerfile: docker/app/Dockerfile
     restart: unless-stopped
     working_dir: /var/www
+    env_file:
+      - ./stack.env
     volumes:
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
-      - "8080:8080"
-    environment:
-      - APP_ENV=${APP_ENV:-local}
+      - "${REVERB_PORT:-8080}:8080"
     networks:
       - amu_net
     depends_on:
@@ -100,6 +97,8 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
+    env_file:
+      - ./stack.env
     command:
       - /bin/sh
       - -lc
@@ -111,9 +110,6 @@ services:
         else
           exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
         fi
-    environment:
-      - CLOUDFLARED_TUNNEL_TOKEN
-      - CLOUDFLARED_LOGLEVEL
     networks:
       - amu_net
     depends_on:
