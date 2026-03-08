@@ -24,7 +24,7 @@ services:
       dockerfile: docker/nginx/Dockerfile
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8000}:80"
+      - "8000:80"
     networks:
       - amu_net
     depends_on:
@@ -44,7 +44,7 @@ services:
       - amu_mysql_data:/var/lib/mysql
       - amu_runtime_secrets:/run/amu-secrets
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "3306:3306"
     networks:
       - amu_net
 
@@ -55,7 +55,7 @@ services:
     volumes:
       - amu_redis_data:/data
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "6379:6379"
     networks:
       - amu_net
 
@@ -86,9 +86,9 @@ services:
     working_dir: /var/www
     volumes:
       - amu_runtime_secrets:/run/amu-secrets
-    command: php artisan reverb:start --host=0.0.0.0 --port=${REVERB_SERVER_PORT:-8080}
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
-      - "${REVERB_PORT:-8080}:${REVERB_SERVER_PORT:-8080}"
+      - "8080:8080"
     environment:
       - APP_ENV=${APP_ENV:-local}
     networks:
@@ -111,6 +111,9 @@ services:
         else
           exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
         fi
+    environment:
+      - CLOUDFLARED_TUNNEL_TOKEN
+      - CLOUDFLARED_LOGLEVEL
     networks:
       - amu_net
     depends_on:
