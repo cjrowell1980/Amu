@@ -32,6 +32,51 @@ if { [ -z "$DB_PASSWORD_VALUE" ] || [ "$DB_PASSWORD_NORMALIZED" = "null" ]; } \
     echo "Injected DB_PASSWORD into /var/www/.env from shared secret store."
 fi
 
+# 1c. Ensure APP_KEY is stable.
+# Priority:
+#   1) APP_KEY from environment (stack.env / Portainer UI)
+#   2) persisted secret in /run/amu-secrets/app_key
+#   3) generated once and persisted to /run/amu-secrets/app_key
+set_env_value() {
+    KEY="$1"
+    VALUE="$2"
+    FILE="$3"
+    ESCAPED_VALUE=$(printf '%s' "$VALUE" | sed 's/[&|]/\\&/g')
+    if grep -q "^${KEY}=" "$FILE"; then
+        sed -i "s|^${KEY}=.*|${KEY}=${ESCAPED_VALUE}|" "$FILE"
+    else
+        printf '\n%s=%s\n' "$KEY" "$VALUE" >> "$FILE"
+    fi
+}
+
+is_blank_or_null() {
+    VALUE="${1:-}"
+    if [ -z "$VALUE" ]; then
+        return 0
+    fi
+    NORMALIZED=$(printf '%s' "$VALUE" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+    [ "$NORMALIZED" = "null" ]
+}
+
+APP_KEY_SECRET_FILE=/run/amu-secrets/app_key
+APP_KEY_SOURCE=""
+
+if ! is_blank_or_null "${APP_KEY:-}"; then
+    APP_KEY_EFFECTIVE="$APP_KEY"
+    APP_KEY_SOURCE="environment"
+    printf '%s' "$APP_KEY_EFFECTIVE" > "$APP_KEY_SECRET_FILE"
+elif [ -f "$APP_KEY_SECRET_FILE" ] && [ -s "$APP_KEY_SECRET_FILE" ]; then
+    APP_KEY_EFFECTIVE="$(cat "$APP_KEY_SECRET_FILE")"
+    APP_KEY_SOURCE="secret store"
+else
+    APP_KEY_EFFECTIVE="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
+    APP_KEY_SOURCE="generated secret"
+    printf '%s' "$APP_KEY_EFFECTIVE" > "$APP_KEY_SECRET_FILE"
+fi
+
+set_env_value "APP_KEY" "$APP_KEY_EFFECTIVE" /var/www/.env
+echo "Ensured APP_KEY in /var/www/.env from $APP_KEY_SOURCE."
+
 # 2. Ensure dependencies are present when using bind mounts.
 # Docker bind mounts can hide image-built /var/www/vendor.
 if [ ! -f /var/www/vendor/autoload.php ]; then
@@ -41,13 +86,13 @@ if [ ! -f /var/www/vendor/autoload.php ]; then
     COMPOSER_MEMORY_LIMIT=-1 composer install --no-interaction --prefer-dist
 fi
 
-# 3. Ensure APP_KEY is set (Laravel will throw a blank-screen error without it)
+# 3. Ensure APP_KEY is set (fail fast if APP_KEY provisioning failed)
 APP_KEY_VALUE=$(grep -E '^APP_KEY=' /var/www/.env | cut -d '=' -f2- | tr -d '[:space:]')
 if [ -z "$APP_KEY_VALUE" ]; then
     echo ""
-    echo "WARN: APP_KEY is not set in .env. Generating one ..."
+    echo "ERROR: APP_KEY is empty after startup provisioning."
     echo ""
-    php artisan key:generate --force --ansi
+    exit 1
 fi
 
 # ---------------------------------------------------------------------------
