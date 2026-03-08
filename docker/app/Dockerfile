@@ -41,6 +41,7 @@ WORKDIR /var/www
 
 # Copy application files
 COPY . .
+COPY docker/app/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Install PHP dependencies.
 # --no-scripts  — skips post-autoload-dump (php artisan package:discover) which

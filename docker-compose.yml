@@ -4,14 +4,10 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    container_name: amu_app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www
-      - amu_vendor:/var/www/vendor
       - amu_runtime_secrets:/run/amu-secrets
-      - ./docker/app/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       - APP_ENV=${APP_ENV:-local}
     networks:
@@ -26,12 +22,9 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
-    container_name: amu_nginx
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:80"
-    volumes:
-      - .:/var/www
     networks:
       - amu_net
     depends_on:
@@ -41,7 +34,6 @@ services:
     build:
       context: .
       dockerfile: docker/mysql/Dockerfile
-    container_name: amu_mysql
     restart: unless-stopped
     environment:
       DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-}
@@ -58,7 +50,6 @@ services:
 
   redis:
     image: redis:7.2-alpine
-    container_name: amu_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
@@ -72,12 +63,9 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    container_name: amu_horizon
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www
-      - amu_vendor:/var/www/vendor
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan horizon
     environment:
@@ -94,12 +82,9 @@ services:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-    container_name: amu_reverb
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www
-      - amu_vendor:/var/www/vendor
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
@@ -114,11 +99,18 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: amu_cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate --loglevel ${CLOUDFLARED_LOGLEVEL:-info} run --token ${CLOUDFLARED_TUNNEL_TOKEN}
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARED_TUNNEL_TOKEN}
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        TOKEN="$$(printf '%s' "$${CLOUDFLARED_TUNNEL_TOKEN:-}" | tr '[:upper:]' '[:lower:]')"
+        if [ -z "$$TOKEN" ] || [ "$$TOKEN" = "null" ]; then
+          echo "CLOUDFLARED_TUNNEL_TOKEN is empty/null, cloudflared disabled."
+          tail -f /dev/null
+        else
+          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
+        fi
     networks:
       - amu_net
     depends_on:
@@ -130,7 +122,6 @@ services:
 volumes:
   amu_mysql_data:
   amu_redis_data:
-  amu_vendor:
   amu_runtime_secrets:
 
 networks:
