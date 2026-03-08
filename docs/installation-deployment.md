@@ -125,6 +125,7 @@ Then redeploy.
 - If `DB_PASSWORD` is set: that value is used.
 - If `DB_ROOT_PASSWORD` is blank: a random password is generated.
 - If `DB_ROOT_PASSWORD` is set: that value is used.
+- If your template UI does not allow empty values, string `null` is treated as blank.
 
 Generated passwords are persisted in Docker volume `amu_runtime_secrets`:
 

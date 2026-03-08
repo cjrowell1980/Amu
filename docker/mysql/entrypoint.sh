@@ -11,8 +11,17 @@ generate_password() {
     tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32
 }
 
+is_blank_or_null() {
+    VALUE="${1:-}"
+    if [ -z "$VALUE" ]; then
+        return 0
+    fi
+    NORMALIZED=$(printf '%s' "$VALUE" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+    [ "$NORMALIZED" = "null" ]
+}
+
 # Root password: use provided value, else persisted/generated value.
-if [ -n "${DB_ROOT_PASSWORD:-}" ]; then
+if ! is_blank_or_null "${DB_ROOT_PASSWORD:-}"; then
     ROOT_PASSWORD="$DB_ROOT_PASSWORD"
     printf '%s' "$ROOT_PASSWORD" > "$DB_ROOT_PASSWORD_FILE"
 elif [ -f "$DB_ROOT_PASSWORD_FILE" ] && [ -s "$DB_ROOT_PASSWORD_FILE" ]; then
@@ -24,7 +33,7 @@ else
 fi
 
 # App DB password: use provided value, else persisted/generated value.
-if [ -n "${DB_PASSWORD:-}" ]; then
+if ! is_blank_or_null "${DB_PASSWORD:-}"; then
     APP_DB_PASSWORD="$DB_PASSWORD"
     printf '%s' "$APP_DB_PASSWORD" > "$DB_PASSWORD_FILE"
 elif [ -f "$DB_PASSWORD_FILE" ] && [ -s "$DB_PASSWORD_FILE" ]; then
