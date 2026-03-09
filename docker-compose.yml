@@ -28,9 +28,7 @@ services:
     ports:
       - "${APP_PORT:-8000}:80"
     networks:
-      amu_net:
-        aliases:
-          - nginx
+      - amu_net
     depends_on:
       - app
 
