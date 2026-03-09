@@ -4,8 +4,77 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bf4ab216a717ca6f559803886ad1d0fb",
+    "content-hash": "cd93f135ca04c43b54345e2f0eb3c011",
     "packages": [
+        {
+            "name": "amu/blackjack",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/blackjack",
+                "reference": "022339b8f19b566cbbbb19d781693ac401ed6639"
+            },
+            "require": {
+                "amu/core": "@dev",
+                "laravel/framework": "^12.0",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Amu\\Blackjack\\BlackjackServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Amu\\Blackjack\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Blackjack module package for the Amu platform.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "amu/core",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/core",
+                "reference": "e908ef93d117cb7e7590810514f6e10f9ee4f14c"
+            },
+            "require": {
+                "laravel/framework": "^12.0",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Amu\\Core\\CoreServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Amu\\Core\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Core platform package for modular party and casino-style games.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
         {
             "name": "brick/math",
             "version": "0.14.8",
@@ -9797,7 +9866,10 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "amu/blackjack": 20,
+        "amu/core": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

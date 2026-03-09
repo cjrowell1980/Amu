@@ -31,26 +31,6 @@ class AdminUserSeeder extends Seeder
 
         $admin->syncRoles(['admin']);
 
-        // Create an operator test account as well.
-        $operator = User::firstOrCreate(
-            ['email' => 'operator@example.com'],
-            [
-                'name' => 'Platform Operator',
-                'password' => bcrypt('password'),
-            ],
-        );
-
-        if (! $operator->profile) {
-            UserProfile::create([
-                'user_id' => $operator->id,
-                'display_name' => 'Operator',
-                'status' => 'online',
-            ]);
-        }
-
-        $operator->syncRoles(['operator']);
-
-        $this->command->info('Admin: ' . $adminEmail . ' / ' . $adminPassword);
-        $this->command->info('Operator: operator@example.com / password');
+        $this->command?->info('Admin: '.$adminEmail.' / '.$adminPassword);
     }
 }

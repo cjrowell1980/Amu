@@ -10,11 +10,14 @@
         </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
+            <directory>packages/blackjack/tests/Feature</directory>
         </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>app</directory>
+            <directory>packages/core/src</directory>
+            <directory>packages/blackjack/src</directory>
         </include>
     </source>
     <php>

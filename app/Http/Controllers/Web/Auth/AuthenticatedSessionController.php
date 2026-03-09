@@ -51,12 +51,8 @@ class AuthenticatedSessionController extends Controller
 
     private function defaultRouteFor($user): string
     {
-        if ($user && $user->hasAnyRole(['admin', 'operator'])) {
+        if ($user && $user->hasRole('admin')) {
             return 'admin.dashboard';
-        }
-
-        if ($user && $user->hasRole('moderator')) {
-            return 'admin.rooms.index';
         }
 
         return 'home';

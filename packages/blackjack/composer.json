@@ -1,0 +1,25 @@
+{
+    "name": "amu/blackjack",
+    "description": "Blackjack module package for the Amu platform.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "amu/core": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Amu\\Blackjack\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Amu\\Blackjack\\BlackjackServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

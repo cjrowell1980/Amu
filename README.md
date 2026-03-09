@@ -1,69 +1,51 @@
-# Amu — Multiplayer Game Platform Core
+# Amu
 
-A **production-ready Laravel 12 platform core** for building modular multiplayer games. The platform handles authentication, lobby management, session lifecycle, real-time events, and operator tooling. Game-specific logic lives in isolated, swappable modules.
+Amu is a Laravel 12 modular game platform built around a generic core package and installable game packages. The host app stays thin while game logic lives inside Composer packages under `packages/`.
 
-## What this is
+## Current structure
 
-Amu is the **foundation layer** — not a game itself. It provides:
+- `packages/core`: module registry, rooms, sessions, participants, wallet/accounting, admin pages
+- `packages/blackjack`: the first real game module, implemented as a self-contained Blackjack MVP package
+- `app/`: host Laravel shell for auth, package loading, and app-level bootstrap
 
-- Player authentication and profiles (Sanctum + Spatie Permission)
-- Game registry with feature-flag-based availability control
-- Room (lobby) lifecycle with status state machine
-- Session lifecycle with reconnect scaffolding
-- Real-time events via Laravel Reverb (WebSocket)
-- Admin/operator panel (Blade)
-- Audit logging
-- Comprehensive test suite
+## Included today
 
-## What this is NOT
+- Generic module system with enable/disable support
+- Generic room and session lifecycle
+- Generic player participation and wallet transactions
+- Basic admin pages for modules, rooms, and sessions
+- Blackjack MVP gameplay through package-owned APIs
 
-- Not a game (no poker, blackjack, etc. — those are future modules)
-- Not a SPA frontend (Blade for admin only)
-- Not a microservice architecture (intentional Laravel monolith)
+## Not included yet
 
-## Tech stack
-
-| Component       | Technology                    |
-|-----------------|-------------------------------|
-| Framework       | Laravel 12                    |
-| Language        | PHP 8.3+                      |
-| Database        | MariaDB 11 / MySQL 8           |
-| Cache / Queue   | Redis                         |
-| WebSocket       | Laravel Reverb                |
-| Queue monitor   | Laravel Horizon               |
-| Debug           | Laravel Telescope             |
-| Auth            | Laravel Sanctum               |
-| Roles           | Spatie Laravel Permission     |
-| Containers      | Docker + Docker Compose       |
-| Admin UI        | Blade                         |
+- Advanced casino features such as split, double down, insurance, or side bets
+- A polished player-facing frontend
+- Additional game packages beyond Blackjack
 
 ## Quick start
 
 ```bash
 cp .env.example .env
 docker compose up -d
-docker compose exec app composer install
-docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
-# → http://localhost:8000
-# → http://localhost:8000/admin  (admin@example.com / password)
 ```
 
-## Documentation
+Then open:
 
-| Doc | Description |
-|-----|-------------|
-| [docs/architecture.md](docs/architecture.md) | Overall architecture and directory layout |
-| [docs/core-domain.md](docs/core-domain.md) | Entities, statuses, and domain rules |
-| [docs/game-module-guide.md](docs/game-module-guide.md) | How to build a game module |
-| [docs/api-overview.md](docs/api-overview.md) | REST API and WebSocket channel reference |
-| [docs/local-development.md](docs/local-development.md) | Docker setup and dev workflow |
-| [docs/installation-deployment.md](docs/installation-deployment.md) | Installation/deployment via CLI, Docker Desktop, and Portainer |
+- `http://localhost:8000`
+- `http://localhost:8000/admin`
 
-## After this phase
+The Docker stack bind-mounts the repository into the containers, so changes to `packages/core` and `packages/blackjack` are available immediately during local development.
 
-The primary remaining implementation work is:
+## Useful commands
 
-1. **Game modules** — implement actual games (blackjack, poker, trivia, etc.) following `docs/game-module-guide.md`
-2. **Player-facing UI** — SPA or mobile app consuming the REST API and WebSocket events
-3. **Optional extras** — leaderboards, economy, social features
+```bash
+docker compose exec app php artisan test
+docker compose exec app php artisan migrate:fresh --seed
+docker compose logs -f app
+```
+
+## Docs
+
+- [docs/game-module-guide.md](docs/game-module-guide.md)
+- [docs/local-development.md](docs/local-development.md)

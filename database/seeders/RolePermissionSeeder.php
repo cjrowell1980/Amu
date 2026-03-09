@@ -10,73 +10,29 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reset cached roles and permissions.
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
-            // Platform management
-            'manage games',
-            'manage users',
+            'manage platform',
+            'manage modules',
             'manage rooms',
-            'view telescope',
-            'view horizon',
-            'view audit logs',
-
-            // Room permissions
-            'create rooms',
-            'moderate rooms',
-            'force close rooms',
-
-            // Session permissions
-            'view sessions',
-            'force end sessions',
-
-            // Feature flag / beta access
-            'access beta games',
+            'manage sessions',
+            'manage wallets',
+            'host rooms',
+            'join rooms',
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // player — basic platform participant
-        $player = Role::firstOrCreate(['name' => 'player']);
-        $player->syncPermissions(['create rooms']);
+        Role::firstOrCreate(['name' => 'player'])->syncPermissions(['join rooms']);
 
-        // beta_tester — player + beta game access
-        $betaTester = Role::firstOrCreate(['name' => 'beta_tester']);
-        $betaTester->syncPermissions([
-            'create rooms',
-            'access beta games',
+        Role::firstOrCreate(['name' => 'host'])->syncPermissions([
+            'host rooms',
+            'join rooms',
         ]);
 
-        // moderator — can moderate rooms and review sessions
-        $moderator = Role::firstOrCreate(['name' => 'moderator']);
-        $moderator->syncPermissions([
-            'create rooms',
-            'moderate rooms',
-            'force close rooms',
-            'view sessions',
-            'force end sessions',
-        ]);
-
-        // operator — can manage game registry and view tooling
-        $operator = Role::firstOrCreate(['name' => 'operator']);
-        $operator->syncPermissions([
-            'create rooms',
-            'manage games',
-            'moderate rooms',
-            'force close rooms',
-            'view sessions',
-            'force end sessions',
-            'view telescope',
-            'view horizon',
-            'view audit logs',
-            'access beta games',
-        ]);
-
-        // admin — all permissions
-        $admin = Role::firstOrCreate(['name' => 'admin']);
-        $admin->syncPermissions(Permission::all());
+        Role::firstOrCreate(['name' => 'admin'])->syncPermissions(Permission::all());
     }
 }
