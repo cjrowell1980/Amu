@@ -1,18 +1,22 @@
 <?php
 
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Web\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 // ── Auth routes (session-based for web/admin login) ───────────────────────────
-Route::get('/login', fn () => redirect('/'))->name('login');
-Route::post('/logout', function () {
-    auth()->logout();
-    return redirect('/');
-})->name('logout');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+});
 
 // ── Admin / Operator ──────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:admin|operator|moderator'])
