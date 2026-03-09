@@ -56,6 +56,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./stack.env
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-}
     volumes:
       - amu_mysql_data:/var/lib/mysql
       - amu_runtime_secrets:/run/amu-secrets
@@ -112,20 +115,13 @@ services:
     restart: unless-stopped
     env_file:
       - ./stack.env
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN:-}
+      TUNNEL_LOGLEVEL: ${CLOUDFLARED_LOGLEVEL:-info}
     profiles:
       - tunnel
       - tunnel-only
-    command:
-      - /bin/sh
-      - -lc
-      - |
-        TOKEN="$$(printf '%s' "$${CLOUDFLARED_TUNNEL_TOKEN:-}" | tr '[:upper:]' '[:lower:]')"
-        if [ -z "$$TOKEN" ] || [ "$$TOKEN" = "null" ]; then
-          echo "CLOUDFLARED_TUNNEL_TOKEN is empty/null, cloudflared disabled."
-          tail -f /dev/null
-        else
-          exec cloudflared tunnel --no-autoupdate --loglevel "$${CLOUDFLARED_LOGLEVEL:-info}" run --token "$${CLOUDFLARED_TUNNEL_TOKEN}"
-        fi
+    command: tunnel --no-autoupdate run
     networks:
       - amu_net
 
