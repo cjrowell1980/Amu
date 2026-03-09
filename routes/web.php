@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Admin\SitePageController;
+use App\Http\Controllers\Web\PublicPageController;
 use App\Http\Controllers\Web\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/', [PublicPageController::class, 'home'])->name('home');
+Route::get('/{page}', [PublicPageController::class, 'show'])
+    ->whereIn('page', ['about-us', 'games', 'membership', 'contact-us'])
+    ->name('pages.show');
 
 // ── Auth routes (session-based for web/admin login) ───────────────────────────
 Route::middleware('guest')->group(function () {
@@ -41,6 +44,9 @@ Route::middleware(['auth', 'role:admin|operator|moderator'])
             Route::get('/games/{game}',                  [Admin\GameController::class, 'show'])->name('games.show');
             Route::post('/games/{game}/toggle',          [Admin\GameController::class, 'toggleEnabled'])->name('games.toggle');
             Route::post('/games/{game}/availability',    [Admin\GameController::class, 'setAvailability'])->name('games.availability');
+            Route::get('/pages',                         [SitePageController::class, 'index'])->name('pages.index');
+            Route::get('/pages/{page}/edit',             [SitePageController::class, 'edit'])->name('pages.edit');
+            Route::put('/pages/{page}',                  [SitePageController::class, 'update'])->name('pages.update');
         });
 
         // Rooms (admin + operator + moderator)

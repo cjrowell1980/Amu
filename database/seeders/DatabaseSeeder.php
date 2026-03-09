@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             GameSeeder::class,
             AdminUserSeeder::class,
+            SitePageSeeder::class,
         ]);
     }
 }
