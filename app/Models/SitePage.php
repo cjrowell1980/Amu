@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class SitePage extends Model
 {
@@ -55,5 +57,16 @@ class SitePage extends Model
             ->where('is_published', true)
             ->orderBy('sort_order')
             ->orderBy('id');
+    }
+
+    protected function renderedBody(): Attribute
+    {
+        return Attribute::get(fn (): string => Str::markdown(
+            $this->body ?? '',
+            [
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]
+        ));
     }
 }
