@@ -23,4 +23,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /vendor
-secrets
+
+# Deployment-only secrets kept outside version control.
+/secrets

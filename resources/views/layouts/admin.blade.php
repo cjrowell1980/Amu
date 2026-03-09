@@ -46,6 +46,7 @@
     <a href="{{ route('admin.dashboard') }}">Dashboard</a>
     <a href="{{ route('admin.users.index') }}">Users</a>
     <a href="{{ route('admin.games.index') }}">Games</a>
+    <a href="{{ route('admin.pages.index') }}">Pages</a>
     <a href="{{ route('admin.rooms.index') }}">Rooms</a>
     <a href="{{ route('admin.sessions.index') }}">Sessions</a>
     @hasrole('admin|operator')
