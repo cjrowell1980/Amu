@@ -50,7 +50,25 @@
 
             <div style="margin-bottom: 1rem;">
                 <label for="body" style="display:block; font-weight:600; margin-bottom:0.4rem;">Page Content</label>
+                <div style="margin:0 0 0.6rem; color:#666; font-size:0.88rem; line-height:1.5;">
+                    Markdown is supported here. Examples:
+                    <code># Heading</code>,
+                    <code>## Section</code>,
+                    <code>**bold**</code>,
+                    <code>*italic*</code>,
+                    <code>- bullet item</code>,
+                    <code>[link text](https://example.com)</code>.
+                </div>
                 <textarea id="body" name="body" rows="12" style="width:100%; padding:0.7rem; border:1px solid #d7d7d7; border-radius:6px;">{{ old('body', $page->body) }}</textarea>
+            </div>
+
+            <div style="margin-bottom: 1rem; border:1px solid #e4e4e4; border-radius:8px; overflow:hidden;">
+                <div style="padding:0.75rem 1rem; background:#f7f7f7; border-bottom:1px solid #e4e4e4; font-weight:600;">
+                    Preview
+                </div>
+                <div style="padding:1rem 1.1rem; line-height:1.7; color:#4b5563;">
+                    {!! old('body') ? \Illuminate\Support\Str::markdown(old('body'), ['html_input' => 'strip', 'allow_unsafe_links' => false]) : $page->rendered_body !!}
+                </div>
             </div>
 
             <div style="display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1rem;">

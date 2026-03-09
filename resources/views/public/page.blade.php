@@ -145,7 +145,63 @@
             color: var(--muted);
             line-height: 1.85;
             font-size: 1.02rem;
-            white-space: pre-line;
+        }
+
+        .copy > :first-child {
+            margin-top: 0;
+        }
+
+        .copy > :last-child {
+            margin-bottom: 0;
+        }
+
+        .copy h1,
+        .copy h2,
+        .copy h3,
+        .copy h4 {
+            color: var(--ink);
+            line-height: 1.1;
+            margin: 1.5rem 0 0.7rem;
+        }
+
+        .copy p,
+        .copy ul,
+        .copy ol,
+        .copy blockquote {
+            margin: 0 0 1rem;
+        }
+
+        .copy ul,
+        .copy ol {
+            padding-left: 1.2rem;
+        }
+
+        .copy li + li {
+            margin-top: 0.35rem;
+        }
+
+        .copy a {
+            color: var(--accent-deep);
+            text-decoration: underline;
+            text-underline-offset: 0.14em;
+        }
+
+        .copy strong {
+            color: var(--ink);
+        }
+
+        .copy blockquote {
+            padding-left: 1rem;
+            border-left: 3px solid rgba(123, 45, 20, 0.24);
+            color: #4b5563;
+        }
+
+        .copy code {
+            padding: 0.1rem 0.35rem;
+            border-radius: 6px;
+            background: rgba(27, 35, 48, 0.06);
+            font-family: "Courier New", monospace;
+            font-size: 0.92em;
         }
 
         .games-grid {
@@ -239,7 +295,7 @@
         </section>
 
         <section class="content">
-            <div class="copy">{{ $page->body }}</div>
+            <div class="copy">{!! $page->rendered_body !!}</div>
         </section>
 
         @if ($page->slug === \App\Models\SitePage::SLUG_GAMES)
