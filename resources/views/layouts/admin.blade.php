@@ -53,6 +53,10 @@
     @endhasrole
     <a href="/telescope" target="_blank">Telescope</a>
     <a href="/horizon" target="_blank">Horizon</a>
+    <form method="POST" action="{{ route('logout') }}" style="margin-left: auto;">
+        @csrf
+        <button type="submit" class="btn btn-sm btn-primary">Sign Out</button>
+    </form>
 </nav>
 
 <div class="container">
