@@ -1,0 +1,136 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www
+    env_file:
+      - ./stack.env
+    volumes:
+      - amu_runtime_secrets:/run/amu-secrets
+    networks:
+      - amu_net
+    depends_on:
+      mysql:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  nginx_local:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    profiles:
+      - local-access
+    ports:
+      - "${APP_PORT:-8000}:80"
+    networks:
+      - amu_net
+    depends_on:
+      - app
+
+  nginx_tunnel:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    profiles:
+      - tunnel-only
+      - tunnel
+    networks:
+      amu_net:
+        aliases:
+          - nginx
+    depends_on:
+      - app
+
+  mysql:
+    build:
+      context: .
+      dockerfile: docker/mysql/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./stack.env
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-}
+    volumes:
+      - amu_mysql_data:/var/lib/mysql
+      - amu_runtime_secrets:/run/amu-secrets
+    networks:
+      - amu_net
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - amu_redis_data:/data
+    networks:
+      - amu_net
+
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www
+    env_file:
+      - ./stack.env
+    volumes:
+      - amu_runtime_secrets:/run/amu-secrets
+    command: php artisan horizon
+    networks:
+      - amu_net
+    depends_on:
+      mysql:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www
+    env_file:
+      - ./stack.env
+    volumes:
+      - amu_runtime_secrets:/run/amu-secrets
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    networks:
+      - amu_net
+    depends_on:
+      redis:
+        condition: service_started
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    env_file:
+      - ./stack.env
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN:-}
+      TUNNEL_LOGLEVEL: ${CLOUDFLARED_LOGLEVEL:-info}
+    profiles:
+      - tunnel
+      - tunnel-only
+    command: tunnel --no-autoupdate run
+    networks:
+      - amu_net
+
+volumes:
+  amu_mysql_data:
+  amu_redis_data:
+  amu_runtime_secrets:
+
+networks:
+  amu_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${AMU_SUBNET:-172.28.50.0/24}
