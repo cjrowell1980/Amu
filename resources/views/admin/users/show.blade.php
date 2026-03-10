@@ -22,45 +22,26 @@
 </div>
 
 <div class="card">
-    <h2>Hosted Rooms ({{ $user->hostedRooms->count() }})</h2>
-    @if($user->hostedRooms->isEmpty())
-        <p style="color:#888">No rooms hosted yet.</p>
-    @else
-        <table>
-            <thead><tr><th>Code</th><th>Game</th><th>Status</th><th>Created</th></tr></thead>
-            <tbody>
-                @foreach($user->hostedRooms as $room)
-                <tr>
-                    <td>{{ $room->code }}</td>
-                    <td>{{ $room->game?->name ?? '—' }}</td>
-                    <td><span class="badge badge-gray">{{ $room->status }}</span></td>
-                    <td>{{ $room->created_at->format('Y-m-d') }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-</div>
+    <h2>Roles</h2>
+    <form method="POST" action="{{ route('admin.users.roles.update', $user) }}">
+        @csrf
+        @method('PUT')
 
-<div class="card">
-    <h2>Session Participations ({{ $user->sessionParticipations->count() }})</h2>
-    @if($user->sessionParticipations->isEmpty())
-        <p style="color:#888">No sessions yet.</p>
-    @else
-        <table>
-            <thead><tr><th>Session UUID</th><th>Game</th><th>Role</th><th>Rank</th><th>Score</th></tr></thead>
-            <tbody>
-                @foreach($user->sessionParticipations as $p)
-                <tr>
-                    <td><code>{{ substr($p->session->uuid, 0, 8) }}…</code></td>
-                    <td>{{ $p->session->game?->name ?? '—' }}</td>
-                    <td>{{ $p->role }}</td>
-                    <td>{{ $p->final_rank ?? '—' }}</td>
-                    <td>{{ $p->score ?? '—' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1rem;">
+            @foreach($roles as $role)
+                <label style="display:flex;align-items:center;gap:0.5rem;padding:0.75rem;border:1px solid #ddd;border-radius:8px;">
+                    <input
+                        type="checkbox"
+                        name="roles[]"
+                        value="{{ $role->name }}"
+                        @checked($user->hasRole($role->name))
+                    >
+                    <span>{{ $role->name }}</span>
+                </label>
+            @endforeach
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Roles</button>
+    </form>
 </div>
 @endsection

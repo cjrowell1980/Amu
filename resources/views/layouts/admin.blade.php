@@ -43,15 +43,27 @@
 <body>
 <nav class="nav">
     <span class="brand">Amu Admin</span>
+    <a href="{{ route('members.dashboard') }}">Members</a>
     <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+    @can('manage users')
     <a href="{{ route('admin.users.index') }}">Users</a>
-    <a href="{{ route('admin.games.index') }}">Games</a>
+    @endcan
+    @can('manage roles')
+    <a href="{{ route('admin.roles.index') }}">Roles</a>
+    @endcan
+    <a href="{{ route('admin.modules.index') }}">Modules</a>
+    @can('manage platform')
     <a href="{{ route('admin.pages.index') }}">Pages</a>
+    @endcan
+    @can('manage rooms')
     <a href="{{ route('admin.rooms.index') }}">Rooms</a>
+    @endcan
+    @can('manage sessions')
     <a href="{{ route('admin.sessions.index') }}">Sessions</a>
-    @hasrole('admin|operator')
+    @endcan
+    @can('view audit logs')
     <a href="{{ route('admin.audit.index') }}">Audit</a>
-    @endhasrole
+    @endcan
     <a href="/telescope" target="_blank">Telescope</a>
     <a href="/horizon" target="_blank">Horizon</a>
     <form method="POST" action="{{ route('logout') }}" style="margin-left: auto;">

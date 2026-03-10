@@ -28,7 +28,8 @@ class GameRoomPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create rooms');
+        return $user->hasPermissionTo('host rooms')
+            || $user->hasRole(['admin', 'operator', 'moderator']);
     }
 
     public function update(User $user, GameRoom $room): bool

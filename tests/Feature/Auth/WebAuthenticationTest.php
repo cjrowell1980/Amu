@@ -37,8 +37,41 @@ class WebAuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertRedirect(route('members.dashboard'));
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_members_dashboard_shows_admin_area_link_when_user_has_access(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $this->actingAs($user)
+            ->get(route('members.dashboard'))
+            ->assertOk()
+            ->assertSee('Members Area')
+            ->assertSee('Open Admin Area');
+    }
+
+    public function test_members_dashboard_hides_admin_area_link_for_regular_players(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('player');
+
+        $this->actingAs($user)
+            ->get(route('members.dashboard'))
+            ->assertOk()
+            ->assertSee('Members Area')
+            ->assertDontSee('Open Admin Area');
+    }
+
+    public function test_admin_can_access_user_and_role_management_pages(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $this->actingAs($user)->get(route('admin.users.index'))->assertOk();
+        $this->actingAs($user)->get(route('admin.roles.index'))->assertOk();
     }
 
     public function test_invalid_credentials_return_to_login(): void
