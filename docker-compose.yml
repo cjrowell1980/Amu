@@ -9,7 +9,6 @@ services:
     env_file:
       - ./stack.env
     volumes:
-      - ./:/var/www
       - amu_runtime_secrets:/run/amu-secrets
     networks:
       - amu_net
@@ -28,8 +27,6 @@ services:
       - local-access
     ports:
       - "${APP_PORT:-8000}:80"
-    volumes:
-      - ./:/var/www:ro
     networks:
       - amu_net
     depends_on:
@@ -43,8 +40,6 @@ services:
     profiles:
       - tunnel-only
       - tunnel
-    volumes:
-      - ./:/var/www:ro
     networks:
       amu_net:
         aliases:
@@ -86,7 +81,6 @@ services:
     env_file:
       - ./stack.env
     volumes:
-      - ./:/var/www
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan horizon
     networks:
@@ -106,7 +100,6 @@ services:
     env_file:
       - ./stack.env
     volumes:
-      - ./:/var/www
       - amu_runtime_secrets:/run/amu-secrets
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     networks:

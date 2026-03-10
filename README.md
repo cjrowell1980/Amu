@@ -35,7 +35,9 @@ Then open:
 - `http://localhost:8000`
 - `http://localhost:8000/admin`
 
-The Docker stack bind-mounts the repository into the containers, so changes to `packages/core` and `packages/blackjack` are available immediately during local development.
+`docker-compose.yml` is the canonical compose file for both local use and Portainer Git-stack deployment.
+
+`docker-compose.example.yml` is kept only as a reference example for a bind-mounted workflow.
 
 ## Useful commands
 

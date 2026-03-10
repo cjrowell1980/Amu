@@ -8,6 +8,11 @@ This guide covers three deployment paths:
 
 It also documents environment variable overrides, port conflict handling, and VLAN network overrides.
 
+Compose file policy:
+
+- `docker-compose.yml` is the canonical stack file for local use and deployment.
+- `docker-compose.example.yml` is a reference/example only and should not be used as the Portainer Git compose path.
+
 ## Prerequisites
 
 - Docker Engine 24+ and Docker Compose v2+
