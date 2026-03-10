@@ -77,6 +77,17 @@ fi
 set_env_value "APP_KEY" "$APP_KEY_EFFECTIVE" /var/www/.env
 echo "Ensured APP_KEY in /var/www/.env from $APP_KEY_SOURCE."
 
+# 1d. Reassert writable runtime paths on every start.
+# Portainer exec sessions often run as root for maintenance commands, which can
+# leave log/cache files owned by root and break Laravel's runtime logging.
+mkdir -p /var/www/storage/logs \
+    /var/www/storage/framework/cache \
+    /var/www/storage/framework/sessions \
+    /var/www/storage/framework/views \
+    /var/www/bootstrap/cache
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+chmod -R ug+rwX /var/www/storage /var/www/bootstrap/cache
+
 # 2. Ensure dependencies are present when using bind mounts.
 # Docker bind mounts can hide image-built /var/www/vendor.
 if [ ! -f /var/www/vendor/autoload.php ]; then

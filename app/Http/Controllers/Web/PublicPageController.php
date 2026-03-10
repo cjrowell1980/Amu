@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Enums\GameAvailability;
 use App\Http\Controllers\Controller;
-use App\Models\Game;
 use App\Models\SitePage;
+use Amu\Core\Models\GameModule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PublicPageController extends Controller
@@ -39,12 +38,8 @@ class PublicPageController extends Controller
         $enabledGames = collect();
 
         if ($page->slug === SitePage::SLUG_GAMES) {
-            $enabledGames = Game::query()
-                ->whereIn('availability', [
-                    GameAvailability::Enabled->value,
-                    GameAvailability::Beta->value,
-                    GameAvailability::Hidden->value,
-                ])
+            $enabledGames = GameModule::query()
+                ->where('enabled', true)
                 ->orderBy('name')
                 ->get();
         }
