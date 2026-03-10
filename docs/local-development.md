@@ -17,10 +17,16 @@ Default seeded admin:
 
 - `admin@example.com` / `password`
 
+## Compose files
+
+- Use `docker-compose.yml` as the default local stack.
+- `docker-compose.example.yml` is a reference/example file only.
+- Do not point Portainer at `docker-compose.example.yml`.
+
 ## Package workflow
 
-- The compose stack bind-mounts the repository into the PHP and Nginx containers.
-- Changes under `packages/core` and `packages/blackjack` are reflected immediately.
+- The default stack builds the application into the containers instead of bind-mounting the repo.
+- If you want a bind-mounted workflow for experimentation, use `docker-compose.example.yml` as a reference and create your own local override.
 - If `vendor/` is missing, the app entrypoint runs `composer install` automatically.
 - If you change Composer dependencies, rerun `docker compose exec app composer install`.
 
