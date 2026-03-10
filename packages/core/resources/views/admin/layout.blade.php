@@ -19,10 +19,27 @@
 <header>
     <h1>Platform Admin</h1>
     <nav>
+        <a href="{{ route('members.dashboard') }}">Members</a>
         <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+        @can('manage users')
+        <a href="{{ route('admin.users.index') }}">Users</a>
+        @endcan
+        @can('manage roles')
+        <a href="{{ route('admin.roles.index') }}">Roles</a>
+        @endcan
         <a href="{{ route('admin.modules.index') }}">Modules</a>
+        @can('manage platform')
+        <a href="{{ route('admin.pages.index') }}">Pages</a>
+        @endcan
+        @can('manage rooms')
         <a href="{{ route('admin.rooms.index') }}">Rooms</a>
+        @endcan
+        @can('manage sessions')
         <a href="{{ route('admin.sessions.index') }}">Sessions</a>
+        @endcan
+        @can('view audit logs')
+        <a href="{{ route('admin.audit.index') }}">Audit</a>
+        @endcan
     </nav>
 </header>
 <main>

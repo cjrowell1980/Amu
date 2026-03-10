@@ -14,7 +14,6 @@
                 <th>Email</th>
                 <th>Display Name</th>
                 <th>Roles</th>
-                <th>Rooms Joined</th>
                 <th>Registered</th>
                 <th></th>
             </tr>
@@ -31,7 +30,6 @@
                         <span class="badge badge-blue">{{ $role }}</span>
                     @endforeach
                 </td>
-                <td>{{ $user->room_memberships_count }}</td>
                 <td>{{ $user->created_at->format('Y-m-d') }}</td>
                 <td><a href="{{ route('admin.users.show', $user) }}" class="btn btn-primary btn-sm">View</a></td>
             </tr>

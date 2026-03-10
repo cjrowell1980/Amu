@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Web\MemberDashboardController;
 use App\Http\Controllers\Web\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,5 +16,6 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/members', MemberDashboardController::class)->name('members.dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

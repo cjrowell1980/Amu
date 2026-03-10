@@ -13,11 +13,16 @@ class RolePermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
+            'access admin area',
             'manage platform',
+            'manage users',
+            'manage roles',
             'manage modules',
             'manage rooms',
             'manage sessions',
             'manage wallets',
+            'view audit logs',
+            'access beta games',
             'host rooms',
             'join rooms',
         ];
@@ -29,6 +34,27 @@ class RolePermissionSeeder extends Seeder
         Role::firstOrCreate(['name' => 'player'])->syncPermissions(['join rooms']);
 
         Role::firstOrCreate(['name' => 'host'])->syncPermissions([
+            'host rooms',
+            'join rooms',
+        ]);
+
+        Role::firstOrCreate(['name' => 'moderator'])->syncPermissions([
+            'access admin area',
+            'manage rooms',
+            'manage sessions',
+            'access beta games',
+            'host rooms',
+            'join rooms',
+        ]);
+
+        Role::firstOrCreate(['name' => 'operator'])->syncPermissions([
+            'access admin area',
+            'manage modules',
+            'manage rooms',
+            'manage sessions',
+            'manage wallets',
+            'view audit logs',
+            'access beta games',
             'host rooms',
             'join rooms',
         ]);
